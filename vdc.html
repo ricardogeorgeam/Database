@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mercado Bitcoin WDC</title>
+  <script type="text/javascript" src="https://tableau.github.io/webdataconnector/dist/tableauwdc-2.3.latest.js"></script>
+  <script type="text/javascript">
+    // Define o que acontece quando o Tableau se conecta ao WDC
+    function myConnector() {
+      var myData = [];
+      
+      // O Tableau chama este método quando ele quer obter os dados
+      this.getData = function(table, doneCallback) {
+        fetch('https://www.mercadobitcoin.com.br/api/v4/ticker/btc_br')
+          .then(response => response.json())
+          .then(data => {
+            // Formatar os dados para um formato que o Tableau entenda
+            myData.push({
+              "Price": data.tickers[0].last,
+              "Volume": data.tickers[0].vol
+            });
+            // Adicionar os dados à tabela
+            table.appendRows(myData);
+            doneCallback();
+          })
+          .catch(error => {
+            console.error('Error fetching data:', error);
+          });
+      };
+      
+      // Define o esquema de dados que o Tableau espera
+      this.getSchema = function(schemaCallback) {
+        var cols = [
+          { id: "Price", dataType: tableau.dataTypeEnum.float },
+          { id: "Volume", dataType: tableau.dataTypeEnum.float }
+        ];
+
+        var tableSchema = {
+          id: "bitcoinPrice",
+          alias: "Bitcoin Price Data",
+          columns: cols
+        };
+        
+        schemaCallback([tableSchema]);
+      };
+    }
+
+    // Registra o conector com o Tableau
+    tableau.registerConnector(myConnector);
+
+    // Quando o botão "Conectar" for clicado
+    function submit() {
+      tableau.connectionName = "Mercado Bitcoin API";
+      tableau.submit();
+    }
+  </script>
+</head>
+<body>
+  <h1>Mercado Bitcoin WDC</h1>
+  <button onclick="submit()">Conectar</button>
+</body>
+</html>
